@@ -4,9 +4,14 @@ import SwiftData
 struct TransactionsListView: View {
     @Query(sort: \Transaction.bookingDate, order: .reverse) private var transactions: [Transaction]
     @Query(sort: \Category.sortOrder) private var categories: [Category]
+    @Query private var connections: [BankConnection] // sin usar directamente: fuerza a esta vista a reevaluar su body cuando cambia la visibilidad de una cuenta en BankDetailView
+
+    private var visibleTransactions: [Transaction] {
+        transactions.filter { $0.account?.isVisible ?? true }
+    }
 
     private var grouped: [(category: String, icon: String, items: [Transaction])] {
-        let byCategory = Dictionary(grouping: transactions) { $0.category?.name ?? "Otros" }
+        let byCategory = Dictionary(grouping: visibleTransactions) { $0.category?.name ?? "Otros" }
         return byCategory.keys.sorted().map { name in
             let icon = categories.first(where: { $0.name == name })?.systemIconName ?? "questionmark.circle"
             return (category: name, icon: icon, items: byCategory[name] ?? [])
@@ -28,7 +33,7 @@ struct TransactionsListView: View {
             }
             .navigationTitle("Movimientos")
             .overlay {
-                if transactions.isEmpty {
+                if visibleTransactions.isEmpty {
                     ContentUnavailableView(
                         "Sin movimientos",
                         systemImage: "list.bullet",

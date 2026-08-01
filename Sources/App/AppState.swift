@@ -25,8 +25,8 @@ final class AppState: ObservableObject {
     }
 
     func bootstrap() async {
-        let accounts = (try? accountsStore.all()) ?? []
-        stage = accounts.isEmpty ? .onboarding : .main
+        let connections = (try? accountsStore.allConnections()) ?? []
+        stage = connections.isEmpty ? .onboarding : .main
     }
 
     func listASPSPs(country: String) async throws -> [ASPSP] {
@@ -55,13 +55,17 @@ final class AppState: ObservableObject {
 
                 statusMessage = "Creando sesión…"
                 let session = try await client.createSession(code: code)
-                let account = try accountsStore.linkAccount(session: session, aspsp: aspsp)
+                let connection = try accountsStore.linkAccounts(session: session, aspsp: aspsp)
 
                 statusMessage = "Consultando saldo…"
-                try? await accountsStore.refreshBalance(account)
+                for account in connection.accounts {
+                    try? await accountsStore.refreshBalance(account)
+                }
 
                 statusMessage = "Trayendo movimientos…"
-                try? await transactionsStore.sync(account: account)
+                for account in connection.accounts {
+                    try? await transactionsStore.sync(account: account)
+                }
 
                 stage = .main
             } catch {
@@ -71,13 +75,20 @@ final class AppState: ObservableObject {
         }
     }
 
-    func unlink(_ account: LinkedAccount) {
-        accountsStore.delete(account)
+    func refreshConnection(_ connection: BankConnection) async {
+        for account in connection.accounts {
+            try? await accountsStore.refreshBalance(account)
+            try? await transactionsStore.sync(account: account)
+        }
+    }
+
+    func unlink(_ connection: BankConnection) {
+        accountsStore.deleteConnection(connection)
         Task { await bootstrap() }
     }
 
     func refreshAll() async {
-        guard let accounts = try? accountsStore.all() else { return }
+        guard let accounts = try? accountsStore.allAccounts() else { return }
         for account in accounts {
             try? await accountsStore.refreshBalance(account)
             try? await transactionsStore.sync(account: account)
