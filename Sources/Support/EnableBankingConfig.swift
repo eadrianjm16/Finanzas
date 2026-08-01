@@ -1,20 +1,20 @@
 import Foundation
 
-enum GoCardlessConfig {
-    static let baseURL = URL(string: "https://bankaccountdata.gocardless.com/api/v2")!
+enum EnableBankingConfig {
+    static let baseURL = URL(string: "https://api.enablebanking.com")!
     static let redirectScheme = "finanzasapp"
     static let redirectURL = "finanzasapp://callback"
 
-    static let secretID: String = {
-        guard let value = secrets["GoCardlessSecretID"] as? String, !value.isEmpty else {
-            fatalError("Falta GoCardlessSecretID en Sources/Secrets/Secrets.plist. Copia Secrets.example.plist a Secrets.plist y complétalo.")
+    static let applicationID: String = {
+        guard let value = secrets["EnableBankingApplicationID"] as? String, !value.isEmpty else {
+            fatalError("Falta EnableBankingApplicationID en Sources/Secrets/Secrets.plist. Copia Secrets.example.plist a Secrets.plist y complétalo.")
         }
         return value
     }()
 
-    static let secretKey: String = {
-        guard let value = secrets["GoCardlessSecretKey"] as? String, !value.isEmpty else {
-            fatalError("Falta GoCardlessSecretKey en Sources/Secrets/Secrets.plist. Copia Secrets.example.plist a Secrets.plist y complétalo.")
+    static let privateKeyPEM: String = {
+        guard let value = secrets["EnableBankingPrivateKeyPEM"] as? String, !value.isEmpty else {
+            fatalError("Falta EnableBankingPrivateKeyPEM en Sources/Secrets/Secrets.plist. Copia Secrets.example.plist a Secrets.plist y complétalo.")
         }
         return value
     }()

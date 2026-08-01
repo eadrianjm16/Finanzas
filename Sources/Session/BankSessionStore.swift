@@ -2,6 +2,7 @@ import Foundation
 import Security
 
 struct StoredBankSession: Codable {
+    let sessionID: String
     let accountUID: String
     let bankName: String
 }
@@ -13,10 +14,10 @@ final class BankSessionStore {
     private let service = "com.adrianjm.finanzas.bank"
     private let account = "bank_session"
 
-    func save(accountUID: String, bankName: String) {
+    func save(sessionID: String, accountUID: String, bankName: String) {
         clear()
         guard let data = try? JSONEncoder().encode(
-            StoredBankSession(accountUID: accountUID, bankName: bankName)
+            StoredBankSession(sessionID: sessionID, accountUID: accountUID, bankName: bankName)
         ) else { return }
 
         let query: [String: Any] = [

@@ -15,14 +15,14 @@ final class AppState: ObservableObject {
     @Published var showError = false
     @Published var errorMessage: String?
 
-    private let client = GoCardlessClient()
+    private let client = EnableBankingClient()
     private let webAuth = WebAuthenticator()
     private let sessionStore = BankSessionStore()
 
     init() {
         if let saved = sessionStore.load() {
             bankDisplayName = saved.bankName
-            Task { await refreshBalance(accountID: saved.accountUID) }
+            Task { await refreshBalance(accountUID: saved.accountUID) }
         }
     }
 
@@ -31,35 +31,33 @@ final class AppState: ObservableObject {
             do {
                 stage = .connecting
                 statusMessage = "Buscando Banco Santander…"
-                let institution = try await client.findInstitution(matching: "santander", country: "ES")
-                bankDisplayName = institution.name
-
-                statusMessage = "Preparando autorización…"
-                let agreementID = try await client.createAgreement(institutionId: institution.id)
-                let requisition = try await client.createRequisition(
-                    institutionId: institution.id,
-                    agreement: agreementID,
-                    reference: UUID().uuidString
-                )
+                let aspsp = try await client.findASPSP(matching: "santander", country: "ES")
+                bankDisplayName = aspsp.name
 
                 statusMessage = "Abriendo autorización del banco…"
-                _ = try await webAuth.authenticate(url: requisition.link, callbackScheme: GoCardlessConfig.redirectScheme)
+                let expectedState = UUID().uuidString
+                let authURL = try await client.startAuthorization(aspsp: aspsp, state: expectedState)
 
-                statusMessage = "Verificando autorización…"
-                var detail = try await client.getRequisition(id: requisition.id)
-                if detail.accounts.isEmpty {
-                    try await Task.sleep(nanoseconds: 2_000_000_000)
-                    detail = try await client.getRequisition(id: requisition.id)
+                let callbackURL = try await webAuth.authenticate(url: authURL, callbackScheme: EnableBankingConfig.redirectScheme)
+
+                if let error = callbackURL.queryItem(named: "error") {
+                    throw EnableBankingError.authorizationFailed(callbackURL.queryItem(named: "error_description") ?? error)
                 }
-                guard let accountID = detail.accounts.first else {
-                    if detail.status != "LN" {
-                        throw GoCardlessError.requisitionNotLinked(status: detail.status)
-                    }
-                    throw GoCardlessError.noAccounts
+                if let returnedState = callbackURL.queryItem(named: "state"), returnedState != expectedState {
+                    throw EnableBankingError.stateMismatch
+                }
+                guard let code = callbackURL.queryItem(named: "code") else {
+                    throw EnableBankingError.missingAuthorizationCode
                 }
 
-                sessionStore.save(accountUID: accountID, bankName: institution.name)
-                await refreshBalance(accountID: accountID)
+                statusMessage = "Creando sesión…"
+                let session = try await client.createSession(code: code)
+                guard let account = session.accounts.first else {
+                    throw EnableBankingError.noAccounts
+                }
+
+                sessionStore.save(sessionID: session.sessionID, accountUID: account.uid, bankName: aspsp.name)
+                await refreshBalance(accountUID: account.uid)
             } catch {
                 stage = .onboarding
                 present(error)
@@ -74,11 +72,11 @@ final class AppState: ObservableObject {
         stage = .onboarding
     }
 
-    private func refreshBalance(accountID: String) async {
+    private func refreshBalance(accountUID: String) async {
         do {
             stage = .connecting
             statusMessage = "Consultando saldo…"
-            let balances = try await client.fetchBalances(accountID: accountID)
+            let balances = try await client.fetchBalances(accountUID: accountUID)
             balance = balances.first
             stage = .connected
         } catch {
