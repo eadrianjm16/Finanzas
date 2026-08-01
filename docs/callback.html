@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Redirigiendo a Finanzas…</title>
+</head>
+<body>
+  <p>Redirigiendo a la app… si no ocurre automáticamente, <a id="link" href="#">pulsa aquí</a>.</p>
+  <script>
+    var target = "finanzasapp://callback" + window.location.search;
+    document.getElementById("link").href = target;
+    window.location.replace(target);
+  </script>
+</body>
+</html>
