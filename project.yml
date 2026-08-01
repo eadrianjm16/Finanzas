@@ -2,14 +2,14 @@ name: Finanzas
 options:
   bundleIdPrefix: com.adrianjm.finanzas
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "17.0"
   developmentLanguage: es
 
 targets:
   Finanzas:
     type: application
     platform: iOS
-    deploymentTarget: "16.0"
+    deploymentTarget: "17.0"
     sources:
       - path: Sources
     info:
@@ -32,7 +32,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.adrianjm.finanzas
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1,2"
-        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         GENERATE_INFOPLIST_FILE: NO
 
 schemes:

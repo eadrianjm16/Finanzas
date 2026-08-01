@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @EnvironmentObject private var appState: AppState
+    @State private var showingBankPicker = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -11,22 +11,25 @@ struct OnboardingView: View {
                 .foregroundStyle(.tint)
             Text("Mis Finanzas")
                 .font(.largeTitle.bold())
-            Text("Conecta tu cuenta del Banco Santander para ver tu saldo.")
+            Text("Conecta tu primera cuenta bancaria para ver tu saldo y tus movimientos.")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 32)
             Spacer()
             Button {
-                appState.connectBank()
+                showingBankPicker = true
             } label: {
-                Text("Conectar con Banco Santander")
+                Text("Conectar banco")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .padding(.horizontal, 32)
             .padding(.bottom, 40)
+        }
+        .sheet(isPresented: $showingBankPicker) {
+            BankPickerView()
         }
     }
 }

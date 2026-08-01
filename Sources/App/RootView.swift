@@ -10,8 +10,8 @@ struct RootView: View {
                 OnboardingView()
             case .connecting:
                 ConnectingView()
-            case .connected:
-                BalanceView()
+            case .main:
+                MainTabView()
             }
         }
         .alert(

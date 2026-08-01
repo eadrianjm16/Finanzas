@@ -1,7 +1,6 @@
 import Foundation
 
 enum EnableBankingError: LocalizedError {
-    case aspspNotFound(query: String, available: [String])
     case authorizationFailed(String)
     case missingAuthorizationCode
     case stateMismatch
@@ -10,9 +9,6 @@ enum EnableBankingError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .aspspNotFound(let query, let available):
-            let list = available.isEmpty ? "no hay bancos disponibles" : available.joined(separator: ", ")
-            return "No se encontró ningún banco que coincida con \"\(query)\". Bancos disponibles: \(list)."
         case .authorizationFailed(let reason):
             return "El banco no autorizó el acceso: \(reason)"
         case .missingAuthorizationCode:
@@ -34,21 +30,19 @@ final class EnableBankingClient {
         self.urlSession = urlSession
     }
 
-    func findASPSP(matching query: String, country: String) async throws -> ASPSP {
-        let url = EnableBankingConfig.baseURL
-            .appendingPathComponent("aspsps")
-            .appendingQuery(["country": country])
-        let response: ASPSPListResponse = try await send(makeRequest(url: url))
-        guard let match = response.aspsps.first(where: { $0.name.localizedCaseInsensitiveContains(query) }) else {
-            throw EnableBankingError.aspspNotFound(query: query, available: response.aspsps.map(\.name))
+    func listASPSPs(country: String?) async throws -> [ASPSP] {
+        var url = EnableBankingConfig.baseURL.appendingPathComponent("aspsps")
+        if let country {
+            url = url.appendingQuery(["country": country])
         }
-        return match
+        let response: ASPSPListResponse = try await send(makeRequest(url: url))
+        return response.aspsps
     }
 
     func startAuthorization(aspsp: ASPSP, state: String) async throws -> URL {
         let validUntil = ISO8601DateFormatter().string(from: Date().addingTimeInterval(90 * 24 * 3600))
         let body = AuthStartRequest(
-            access: .init(validUntil: validUntil),
+            access: .init(validUntil: validUntil, balances: true, transactions: true),
             aspsp: aspsp,
             state: state,
             redirectURL: EnableBankingConfig.redirectURL,
@@ -68,6 +62,49 @@ final class EnableBankingClient {
         let url = EnableBankingConfig.baseURL.appendingPathComponent("accounts/\(accountUID)/balances")
         let response: BalancesResponse = try await send(makeRequest(url: url))
         return response.balances
+    }
+
+    struct TransactionsPage {
+        let transactions: [EBTransaction]
+        let continuationKey: String?
+    }
+
+    private static let dateOnlyFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .iso8601)
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
+    func fetchTransactions(
+        accountUID: String,
+        dateFrom: Date?,
+        dateTo: Date?,
+        continuationKey: String? = nil
+    ) async throws -> TransactionsPage {
+        var params: [String: String] = [:]
+        if let dateFrom { params["date_from"] = Self.dateOnlyFormatter.string(from: dateFrom) }
+        if let dateTo { params["date_to"] = Self.dateOnlyFormatter.string(from: dateTo) }
+        if let continuationKey { params["continuation_key"] = continuationKey }
+
+        var url = EnableBankingConfig.baseURL.appendingPathComponent("accounts/\(accountUID)/transactions")
+        if !params.isEmpty {
+            url = url.appendingQuery(params)
+        }
+        let response: TransactionsResponse = try await send(makeRequest(url: url))
+        return TransactionsPage(transactions: response.transactions, continuationKey: response.continuationKey)
+    }
+
+    func fetchAllTransactions(accountUID: String, dateFrom: Date?, dateTo: Date?) async throws -> [EBTransaction] {
+        var all: [EBTransaction] = []
+        var key: String?
+        repeat {
+            let page = try await fetchTransactions(accountUID: accountUID, dateFrom: dateFrom, dateTo: dateTo, continuationKey: key)
+            all += page.transactions
+            key = page.continuationKey
+        } while key != nil
+        return all
     }
 
     private func makeRequest(url: URL, method: String = "GET", body: Encodable? = nil) throws -> URLRequest {

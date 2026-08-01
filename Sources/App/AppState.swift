@@ -3,37 +3,40 @@ import Foundation
 enum AppStage {
     case onboarding
     case connecting
-    case connected
+    case main
 }
 
 @MainActor
 final class AppState: ObservableObject {
     @Published var stage: AppStage = .onboarding
     @Published var statusMessage: String = ""
-    @Published var bankDisplayName: String = ""
-    @Published var balance: AccountBalance?
     @Published var showError = false
     @Published var errorMessage: String?
 
-    private let client = EnableBankingClient()
+    private let client: EnableBankingClient
     private let webAuth = WebAuthenticator()
-    private let sessionStore = BankSessionStore()
+    private let accountsStore: AccountsStore
+    private let transactionsStore: TransactionsStore
 
-    init() {
-        if let saved = sessionStore.load() {
-            bankDisplayName = saved.bankName
-            Task { await refreshBalance(accountUID: saved.accountUID) }
-        }
+    init(client: EnableBankingClient, accountsStore: AccountsStore, transactionsStore: TransactionsStore) {
+        self.client = client
+        self.accountsStore = accountsStore
+        self.transactionsStore = transactionsStore
     }
 
-    func connectBank() {
+    func bootstrap() async {
+        let accounts = (try? accountsStore.all()) ?? []
+        stage = accounts.isEmpty ? .onboarding : .main
+    }
+
+    func listASPSPs(country: String) async throws -> [ASPSP] {
+        try await client.listASPSPs(country: country)
+    }
+
+    func connectBank(aspsp: ASPSP) {
         Task {
             do {
                 stage = .connecting
-                statusMessage = "Buscando Banco Santander…"
-                let aspsp = try await client.findASPSP(matching: "santander", country: "ES")
-                bankDisplayName = aspsp.name
-
                 statusMessage = "Abriendo autorización del banco…"
                 let expectedState = UUID().uuidString
                 let authURL = try await client.startAuthorization(aspsp: aspsp, state: expectedState)
@@ -52,36 +55,32 @@ final class AppState: ObservableObject {
 
                 statusMessage = "Creando sesión…"
                 let session = try await client.createSession(code: code)
-                guard let account = session.accounts.first else {
-                    throw EnableBankingError.noAccounts
-                }
+                let account = try accountsStore.linkAccount(session: session, aspsp: aspsp)
 
-                sessionStore.save(sessionID: session.sessionID, accountUID: account.uid, bankName: aspsp.name)
-                await refreshBalance(accountUID: account.uid)
+                statusMessage = "Consultando saldo…"
+                try? await accountsStore.refreshBalance(account)
+
+                statusMessage = "Trayendo movimientos…"
+                try? await transactionsStore.sync(account: account)
+
+                stage = .main
             } catch {
-                stage = .onboarding
+                await bootstrap()
                 present(error)
             }
         }
     }
 
-    func disconnect() {
-        sessionStore.clear()
-        balance = nil
-        bankDisplayName = ""
-        stage = .onboarding
+    func unlink(_ account: LinkedAccount) {
+        accountsStore.delete(account)
+        Task { await bootstrap() }
     }
 
-    private func refreshBalance(accountUID: String) async {
-        do {
-            stage = .connecting
-            statusMessage = "Consultando saldo…"
-            let balances = try await client.fetchBalances(accountUID: accountUID)
-            balance = balances.available
-            stage = .connected
-        } catch {
-            stage = .onboarding
-            present(error)
+    func refreshAll() async {
+        guard let accounts = try? accountsStore.all() else { return }
+        for account in accounts {
+            try? await accountsStore.refreshBalance(account)
+            try? await transactionsStore.sync(account: account)
         }
     }
 

@@ -2,9 +2,20 @@ import Foundation
 
 // MARK: - ASPSPs (banks)
 
-struct ASPSP: Codable {
+struct ASPSP: Codable, Identifiable, Hashable {
     let name: String
     let country: String
+    let logo: String?
+    let bic: String?
+    let psuTypes: [String]?
+
+    /// Solo para uso en List/ForEach — nunca se lee al reenviar el struct a la API.
+    var id: String { "\(name)_\(country)" }
+
+    enum CodingKeys: String, CodingKey {
+        case name, country, logo, bic
+        case psuTypes = "psu_types"
+    }
 }
 
 struct ASPSPListResponse: Codable {
@@ -16,7 +27,12 @@ struct ASPSPListResponse: Codable {
 struct AuthStartRequest: Encodable {
     struct Access: Encodable {
         let validUntil: String
-        enum CodingKeys: String, CodingKey { case validUntil = "valid_until" }
+        let balances: Bool
+        let transactions: Bool
+        enum CodingKeys: String, CodingKey {
+            case validUntil = "valid_until"
+            case balances, transactions
+        }
     }
 
     let access: Access
@@ -107,4 +123,45 @@ extension Array where Element == AccountBalance {
 
 struct BalancesResponse: Codable {
     let balances: [AccountBalance]
+}
+
+// MARK: - GET /accounts/{uid}/transactions
+
+struct EBParty: Codable {
+    let name: String?
+}
+
+struct EBTransaction: Codable {
+    let entryReference: String?
+    let transactionAmount: BalanceAmount
+    let creditDebitIndicator: String
+    let bookingDate: String?
+    let valueDate: String?
+    let remittanceInformation: [String]?
+    let creditor: EBParty?
+    let debtor: EBParty?
+    let merchantCategoryCode: String?
+    let status: String?
+
+    enum CodingKeys: String, CodingKey {
+        case entryReference = "entry_reference"
+        case transactionAmount = "transaction_amount"
+        case creditDebitIndicator = "credit_debit_indicator"
+        case bookingDate = "booking_date"
+        case valueDate = "value_date"
+        case remittanceInformation = "remittance_information"
+        case creditor, debtor
+        case merchantCategoryCode = "merchant_category_code"
+        case status
+    }
+}
+
+struct TransactionsResponse: Codable {
+    let transactions: [EBTransaction]
+    let continuationKey: String?
+
+    enum CodingKeys: String, CodingKey {
+        case transactions
+        case continuationKey = "continuation_key"
+    }
 }

@@ -4,36 +4,36 @@ import Security
 struct StoredBankSession: Codable {
     let sessionID: String
     let accountUID: String
-    let bankName: String
 }
 
-/// Persists the (non-secret) identifiers of the last authorized bank
-/// connection in the Keychain, so the app can re-fetch the balance on
-/// relaunch without repeating the PSD2 authorization flow.
+/// Persists the Enable Banking session_id per linked account in the Keychain
+/// (keyed by accountUID), so the app can re-fetch balances/transactions on
+/// relaunch without repeating the PSD2 authorization flow. Non-sensitive
+/// account metadata (bank name, IBAN, cached balance) lives in SwiftData
+/// (see Sources/Persistence/Models.swift), not here.
 final class BankSessionStore {
     private let service = "com.adrianjm.finanzas.bank"
-    private let account = "bank_session"
 
-    func save(sessionID: String, accountUID: String, bankName: String) {
-        clear()
+    func save(sessionID: String, accountUID: String) {
+        delete(accountUID: accountUID)
         guard let data = try? JSONEncoder().encode(
-            StoredBankSession(sessionID: sessionID, accountUID: accountUID, bankName: bankName)
+            StoredBankSession(sessionID: sessionID, accountUID: accountUID)
         ) else { return }
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: accountUID,
             kSecValueData as String: data
         ]
         SecItemAdd(query as CFDictionary, nil)
     }
 
-    func load() -> StoredBankSession? {
+    func load(accountUID: String) -> StoredBankSession? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: accountUID,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
@@ -43,11 +43,24 @@ final class BankSessionStore {
         return try? JSONDecoder().decode(StoredBankSession.self, from: data)
     }
 
-    func clear() {
+    func loadAll() -> [StoredBankSession] {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll
+        ]
+        var result: AnyObject?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let items = result as? [Data] else { return [] }
+        return items.compactMap { try? JSONDecoder().decode(StoredBankSession.self, from: $0) }
+    }
+
+    func delete(accountUID: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: accountUID
         ]
         SecItemDelete(query as CFDictionary)
     }
