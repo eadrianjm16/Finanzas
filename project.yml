@@ -1,0 +1,44 @@
+name: ESIOS
+options:
+  bundleIdPrefix: com.adrianjm.esios
+  deploymentTarget:
+    iOS: "16.0"
+  developmentLanguage: es
+
+targets:
+  ESIOS:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: ESIOS
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false
+        CFBundleURLTypes:
+          - CFBundleURLName: com.adrianjm.esios.enablebanking
+            CFBundleURLSchemes:
+              - esiosapp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.adrianjm.esios
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        GENERATE_INFOPLIST_FILE: NO
+
+schemes:
+  ESIOS:
+    build:
+      targets:
+        ESIOS: all
+    run:
+      config: Debug
