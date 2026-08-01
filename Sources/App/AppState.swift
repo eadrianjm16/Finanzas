@@ -77,7 +77,7 @@ final class AppState: ObservableObject {
             stage = .connecting
             statusMessage = "Consultando saldo…"
             let balances = try await client.fetchBalances(accountUID: accountUID)
-            balance = balances.first
+            balance = balances.available
             stage = .connected
         } catch {
             stage = .onboarding

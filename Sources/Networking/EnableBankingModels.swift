@@ -86,6 +86,25 @@ struct AccountBalance: Codable {
     }
 }
 
+extension Array where Element == AccountBalance {
+    /// El saldo más actualizado que expone el banco. Preferimos, en orden,
+    /// un disponible real con retenciones ya descontadas (XPCD/ITAV/CLAV/OPAV,
+    /// códigos BalanceStatus de ISO 20022); si el banco no los expone —como
+    /// Santander vía Enable Banking, que solo da OPBD/CLBD—, caemos al saldo
+    /// contable acumulado (CLBD) en vez del de apertura del día (OPBD), por
+    /// ser el más reciente de los dos, aunque tampoco descuenta retenciones
+    /// pendientes de tarjeta no liquidadas.
+    var available: AccountBalance? {
+        let priority = ["XPCD", "ITAV", "CLAV", "OPAV", "CLBD"]
+        for type in priority {
+            if let match = first(where: { $0.balanceType == type }) {
+                return match
+            }
+        }
+        return first
+    }
+}
+
 struct BalancesResponse: Codable {
     let balances: [AccountBalance]
 }

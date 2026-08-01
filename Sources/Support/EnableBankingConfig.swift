@@ -3,7 +3,11 @@ import Foundation
 enum EnableBankingConfig {
     static let baseURL = URL(string: "https://api.enablebanking.com")!
     static let redirectScheme = "finanzasapp"
-    static let redirectURL = "finanzasapp://callback"
+    /// URL enviada a Enable Banking al iniciar la autorización. Producción exige
+    /// un redirect HTTPS registrado — esta página en GitHub Pages (docs/callback.html)
+    /// rebota inmediatamente a `finanzasapp://callback`, que sí intercepta
+    /// ASWebAuthenticationSession vía `redirectScheme`.
+    static let redirectURL = "https://eadrianjm16.github.io/Finanzas/callback.html"
 
     static let applicationID: String = {
         guard let value = secrets["EnableBankingApplicationID"] as? String, !value.isEmpty else {
