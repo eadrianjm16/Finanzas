@@ -11,7 +11,7 @@ struct StoredBankSession: Codable {
 /// connection in the Keychain, so the app can re-fetch the balance on
 /// relaunch without repeating the PSD2 authorization flow.
 final class BankSessionStore {
-    private let service = "com.adrianjm.esios.enablebanking"
+    private let service = "com.adrianjm.finanzas.enablebanking"
     private let account = "bank_session"
 
     func save(sessionID: String, accountUID: String, bankName: String) {

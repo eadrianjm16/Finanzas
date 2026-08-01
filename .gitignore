@@ -15,3 +15,6 @@ Sources/Secrets/Secrets.plist
 
 # macOS
 .DS_Store
+
+# Local zip download, not part of the repo
+App_Adrian.zip

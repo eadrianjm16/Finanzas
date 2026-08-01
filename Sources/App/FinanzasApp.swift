@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct ESIOSApp: App {
+struct FinanzasApp: App {
     @StateObject private var appState = AppState()
 
     var body: some Scene {

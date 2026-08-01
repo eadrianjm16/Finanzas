@@ -10,7 +10,7 @@ enum WebAuthenticatorError: LocalizedError {
 }
 
 /// Drives the PSD2 SCA redirect flow: opens the bank's authorization page
-/// in a system browser sheet and captures the `esiosapp://callback` redirect.
+/// in a system browser sheet and captures the `finanzasapp://callback` redirect.
 final class WebAuthenticator: NSObject, ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         UIApplication.shared.connectedScenes

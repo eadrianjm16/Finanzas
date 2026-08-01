@@ -2,8 +2,8 @@ import Foundation
 
 enum EnableBankingConfig {
     static let baseURL = URL(string: "https://api.enablebanking.com")!
-    static let redirectScheme = "esiosapp"
-    static let redirectURL = "esiosapp://callback"
+    static let redirectScheme = "finanzasapp"
+    static let redirectURL = "finanzasapp://callback"
 
     static let applicationID: String = {
         guard let value = secrets["EnableBankingApplicationID"] as? String, !value.isEmpty else {
