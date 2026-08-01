@@ -1,12 +1,12 @@
-name: ESIOS
+name: Finanzas
 options:
-  bundleIdPrefix: com.adrianjm.esios
+  bundleIdPrefix: com.adrianjm.finanzas
   deploymentTarget:
     iOS: "16.0"
   developmentLanguage: es
 
 targets:
-  ESIOS:
+  Finanzas:
     type: application
     platform: iOS
     deploymentTarget: "16.0"
@@ -15,7 +15,7 @@ targets:
     info:
       path: Generated/Info.plist
       properties:
-        CFBundleDisplayName: ESIOS
+        CFBundleDisplayName: Finanzas
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         UILaunchScreen: {}
@@ -24,21 +24,21 @@ targets:
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
         CFBundleURLTypes:
-          - CFBundleURLName: com.adrianjm.esios.enablebanking
+          - CFBundleURLName: com.adrianjm.finanzas.enablebanking
             CFBundleURLSchemes:
-              - esiosapp
+              - finanzasapp
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.adrianjm.esios
+        PRODUCT_BUNDLE_IDENTIFIER: com.adrianjm.finanzas
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
         GENERATE_INFOPLIST_FILE: NO
 
 schemes:
-  ESIOS:
+  Finanzas:
     build:
       targets:
-        ESIOS: all
+        Finanzas: all
     run:
       config: Debug
