@@ -24,7 +24,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
         CFBundleURLTypes:
-          - CFBundleURLName: com.adrianjm.finanzas.enablebanking
+          - CFBundleURLName: com.adrianjm.finanzas.bank
             CFBundleURLSchemes:
               - finanzasapp
     settings:

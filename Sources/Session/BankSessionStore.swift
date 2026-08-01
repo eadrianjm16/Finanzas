@@ -2,7 +2,6 @@ import Foundation
 import Security
 
 struct StoredBankSession: Codable {
-    let sessionID: String
     let accountUID: String
     let bankName: String
 }
@@ -11,13 +10,13 @@ struct StoredBankSession: Codable {
 /// connection in the Keychain, so the app can re-fetch the balance on
 /// relaunch without repeating the PSD2 authorization flow.
 final class BankSessionStore {
-    private let service = "com.adrianjm.finanzas.enablebanking"
+    private let service = "com.adrianjm.finanzas.bank"
     private let account = "bank_session"
 
-    func save(sessionID: String, accountUID: String, bankName: String) {
+    func save(accountUID: String, bankName: String) {
         clear()
         guard let data = try? JSONEncoder().encode(
-            StoredBankSession(sessionID: sessionID, accountUID: accountUID, bankName: bankName)
+            StoredBankSession(accountUID: accountUID, bankName: bankName)
         ) else { return }
 
         let query: [String: Any] = [
