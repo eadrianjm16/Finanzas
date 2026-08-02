@@ -2,6 +2,8 @@ import Foundation
 import SwiftData
 
 enum DefaultCategories {
+    static let otrosName = "Otros"
+
     static let seed: [(name: String, icon: String)] = [
         ("Nómina/Ingresos", "arrow.down.circle"),
         ("Alimentación", "cart"),
@@ -14,7 +16,7 @@ enum DefaultCategories {
         ("Compras", "bag"),
         ("Suscripciones", "arrow.triangle.2.circlepath"),
         ("Comisiones bancarias", "building.columns"),
-        ("Otros", "questionmark.circle")
+        (otrosName, "questionmark.circle")
     ]
 
     /// Siembra las categorías por defecto si la tabla está vacía. Llamar una vez al arrancar.

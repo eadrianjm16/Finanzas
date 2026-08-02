@@ -93,6 +93,17 @@ final class Transaction {
 }
 
 @Model
+final class Budget {
+    @Attribute(.unique) var categoryName: String
+    var monthlyLimit: Decimal
+
+    init(categoryName: String, monthlyLimit: Decimal) {
+        self.categoryName = categoryName
+        self.monthlyLimit = monthlyLimit
+    }
+}
+
+@Model
 final class Category {
     @Attribute(.unique) var name: String
     var systemIconName: String

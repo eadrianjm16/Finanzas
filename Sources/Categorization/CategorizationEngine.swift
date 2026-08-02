@@ -56,6 +56,6 @@ enum CategorizationEngine {
             }
         }
 
-        return "Otros"
+        return DefaultCategories.otrosName
     }
 }
