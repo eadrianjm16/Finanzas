@@ -136,7 +136,10 @@ struct AnalysisView: View {
                 selectedMonth = MonthRange.adding(-1, to: selectedMonth)
             } label: {
                 Image(systemName: "chevron.left")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             Spacer()
             Text(MonthRange.rangeText(selectedMonth))
                 .font(.subheadline.bold())
@@ -145,7 +148,10 @@ struct AnalysisView: View {
                 selectedMonth = MonthRange.adding(1, to: selectedMonth)
             } label: {
                 Image(systemName: "chevron.right")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
         }
     }
 
