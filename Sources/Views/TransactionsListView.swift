@@ -10,24 +10,20 @@ struct TransactionsListView: View {
         transactions.filter { $0.account?.isVisible ?? true }
     }
 
-    private var grouped: [(category: String, icon: String, items: [Transaction])] {
-        let byCategory = Dictionary(grouping: visibleTransactions) { $0.category?.name ?? DefaultCategories.otrosName }
-        return byCategory.keys.sorted().map { name in
-            let icon = categories.first(where: { $0.name == name })?.systemIconName ?? "questionmark.circle"
-            return (category: name, icon: icon, items: byCategory[name] ?? [])
-        }
+    private var groupedByDay: [(date: Date, items: [Transaction])] {
+        TransactionGrouping.byDay(visibleTransactions)
     }
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(grouped, id: \.category) { group in
+                ForEach(groupedByDay, id: \.date) { group in
                     Section {
                         ForEach(group.items) { tx in
                             TransactionRow(transaction: tx, categories: categories)
                         }
                     } header: {
-                        Label(group.category, systemImage: group.icon)
+                        Text(TransactionGrouping.dayHeaderFormatter.string(from: group.date).uppercased())
                     }
                 }
             }
@@ -45,18 +41,32 @@ struct TransactionsListView: View {
     }
 }
 
-private struct TransactionRow: View {
+struct TransactionRow: View {
     @Bindable var transaction: Transaction
     let categories: [Category]
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(transaction.counterpartyName ?? transaction.remittanceInformation)
                     .lineLimit(1)
-                Text(transaction.bookingDate, style: .date)
+                Text(transaction.category?.name ?? DefaultCategories.otrosName)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Menu {
+                    ForEach(categories) { category in
+                        Button(category.name) {
+                            transaction.category = category
+                            transaction.isUserCategorized = true
+                        }
+                    }
+                } label: {
+                    Text("Recategorizar")
+                        .font(.caption.bold())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .overlay(Capsule().stroke(Color.accentColor, lineWidth: 1))
+                }
             }
             Spacer()
             Text(formattedAmount)
