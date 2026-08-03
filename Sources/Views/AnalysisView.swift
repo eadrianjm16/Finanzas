@@ -14,6 +14,7 @@ struct AnalysisView: View {
     private enum Segment: String, CaseIterable, Identifiable {
         case ingresos = "Ingresos"
         case gastos = "Gastos"
+        case noComputable = "No computable"
         var id: String { rawValue }
     }
 
@@ -36,11 +37,17 @@ struct AnalysisView: View {
         transactions.filter { $0.account?.isVisible ?? true }
     }
 
+    private var internalTransferRefs: Set<String> {
+        InternalTransferDetector.detect(visibleTransactions)
+    }
+
     private func totals(for month: Date) -> (ingresos: Decimal, gastos: Decimal) {
         var ingresos = Decimal(0)
         var gastos = Decimal(0)
+        let transfers = internalTransferRefs
         for tx in visibleTransactions {
-            guard Calendar.current.isDate(tx.bookingDate, equalTo: month, toGranularity: .month) else { continue }
+            guard Calendar.current.isDate(tx.bookingDate, equalTo: month, toGranularity: .month),
+                  !transfers.contains(tx.entryReference) else { continue }
             if tx.creditDebitIndicator == "CRDT" {
                 ingresos += abs(tx.amount)
             } else {
@@ -70,12 +77,20 @@ struct AnalysisView: View {
     }
 
     private var categoryBreakdown: [CategoryBreakdownItem] {
-        let indicator = segment == .ingresos ? "CRDT" : "DBIT"
+        let transfers = internalTransferRefs
         var amounts: [String: Decimal] = [:]
         var counts: [String: Int] = [:]
         for tx in visibleTransactions {
-            guard tx.creditDebitIndicator == indicator,
-                  Calendar.current.isDate(tx.bookingDate, equalTo: selectedMonth, toGranularity: .month) else { continue }
+            guard Calendar.current.isDate(tx.bookingDate, equalTo: selectedMonth, toGranularity: .month) else { continue }
+            let isTransfer = transfers.contains(tx.entryReference)
+            switch segment {
+            case .noComputable:
+                guard isTransfer else { continue }
+            case .ingresos:
+                guard !isTransfer, tx.creditDebitIndicator == "CRDT" else { continue }
+            case .gastos:
+                guard !isTransfer, tx.creditDebitIndicator == "DBIT" else { continue }
+            }
             let name = tx.category?.name ?? DefaultCategories.otrosName
             amounts[name, default: 0] += abs(tx.amount)
             counts[name, default: 0] += 1
