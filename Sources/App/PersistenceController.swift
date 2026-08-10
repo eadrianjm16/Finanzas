@@ -3,7 +3,10 @@ import SwiftData
 
 enum PersistenceController {
     static let shared: ModelContainer = {
-        let schema = Schema([BankConnection.self, LinkedAccount.self, Transaction.self, Category.self, Budget.self])
+        let schema = Schema([
+            BankConnection.self, LinkedAccount.self, Transaction.self, Category.self,
+            Budget.self, Debtor.self, DebtEntry.self
+        ])
         let configuration = ModelConfiguration(schema: schema)
         do {
             return try ModelContainer(for: schema, configurations: [configuration])

@@ -65,6 +65,28 @@ final class TransactionsStore {
         try modelContext.save()
     }
 
+    /// Vuelve a pasar el motor de categorización sobre movimientos que nunca
+    /// se categorizaron a mano — útil tras ampliar CategorizationEngine, ya
+    /// que el motor solo corre automáticamente al insertar un movimiento
+    /// nuevo, nunca retroactivamente. Devuelve cuántos cambiaron.
+    func recategorizeUncategorized() -> Int {
+        let predicate = #Predicate<Transaction> { $0.isUserCategorized == false }
+        let pending = (try? modelContext.fetch(FetchDescriptor(predicate: predicate))) ?? []
+        var updated = 0
+        for tx in pending {
+            let name = CategorizationEngine.suggestCategory(
+                mcc: tx.merchantCategoryCode,
+                remittanceInformation: tx.remittanceInformation,
+                creditDebitIndicator: tx.creditDebitIndicator
+            )
+            guard tx.category?.name != name, let category = categoryFor(name: name) else { continue }
+            tx.category = category
+            updated += 1
+        }
+        try? modelContext.save()
+        return updated
+    }
+
     private func existing(entryReference: String) throws -> Transaction? {
         var descriptor = FetchDescriptor<Transaction>(predicate: #Predicate { $0.entryReference == entryReference })
         descriptor.fetchLimit = 1

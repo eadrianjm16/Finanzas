@@ -39,7 +39,11 @@ struct AccountsListView: View {
                                     Text(connection.aspspName)
                                         .font(.subheadline.bold())
                                         .foregroundStyle(.primary)
-                                    if let refreshedAt = mostRecentRefresh(connection) {
+                                    if let issue = connection.accounts.compactMap(\.lastSyncIssue).first {
+                                        Text(issue)
+                                            .font(.caption2)
+                                            .foregroundStyle(.orange)
+                                    } else if let refreshedAt = mostRecentRefresh(connection) {
                                         Text("Actualizado \(refreshedAt, style: .relative)")
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
@@ -119,7 +123,11 @@ private struct AccountSummaryRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(displayNameWithSuffix)
                     .font(.subheadline)
-                if let refreshedAt = account.lastBalanceRefreshedAt {
+                if let issue = account.lastSyncIssue {
+                    Text(issue)
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                } else if let refreshedAt = account.lastBalanceRefreshedAt {
                     Text("Actualizado \(refreshedAt, style: .relative)")
                         .font(.caption2)
                         .foregroundStyle(.secondary)

@@ -5,9 +5,25 @@ struct BankDetailView: View {
     @Bindable var connection: BankConnection
     @EnvironmentObject private var appState: AppState
     @State private var showingDeleteConfirm = false
+    @State private var showingBankPicker = false
+
+    private var hasSyncIssue: Bool {
+        connection.accounts.contains { $0.lastSyncIssue != nil }
+    }
 
     var body: some View {
         List {
+            if hasSyncIssue {
+                Section {
+                    Button {
+                        showingBankPicker = true
+                    } label: {
+                        Label("Reconectar \(connection.aspspName)", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                } footer: {
+                    Text("El banco pidió reautorizar el acceso. Te llevaremos de vuelta a iniciar sesión con \(connection.aspspName).")
+                }
+            }
             ForEach(connection.accounts) { account in
                 AccountRow(account: account)
                     .swipeActions(edge: .trailing) {
@@ -51,6 +67,9 @@ struct BankDetailView: View {
         } message: {
             Text("Se eliminará el historial de movimientos de este banco. Si lo vuelves a conectar, empezará de cero.")
         }
+        .sheet(isPresented: $showingBankPicker) {
+            BankPickerView()
+        }
     }
 }
 
@@ -72,6 +91,11 @@ private struct AccountRow: View {
                 Text(iban)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            if let issue = account.lastSyncIssue {
+                Text(issue)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
             }
             Toggle("Ver mi cuenta", isOn: $account.isVisible)
             if account.isVisible {

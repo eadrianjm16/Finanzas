@@ -20,16 +20,20 @@ enum CategorizationEngine {
         "5964": "Compras", "5732": "Compras"
     ]
 
+    // Orden importa: la primera regla que coincida gana. Transporte va antes
+    // que Alimentación a propósito — gasolineras de marca de supermercado
+    // (p. ej. "PAGO MOVIL EN ALCAMPO GASOLIN...", visto en datos reales) deben
+    // caer en Transporte, no en Alimentación por culpa de la marca ALCAMPO.
     private static let keywordRules: [(keywords: [String], category: String)] = [
+        (["UBER", "CABIFY", "BOLT", "RENFE", "METRO", "EMT", "REPSOL", "CEPSA", "BP ", "SHELL", "GASOLIN"], "Transporte"),
         (["MERCADONA", "CARREFOUR", "LIDL", "DIA ", "ALCAMPO", "EROSKI", "AHORRAMAS"], "Alimentación"),
         (["NETFLIX", "SPOTIFY", "HBO", "DISNEY+", "PRIME VIDEO", "APPLE.COM/BILL", "YOUTUBE PREMIUM",
           "ANTHROPIC", "CLAUDE", "OPENAI", "CHATGPT", "WWW.USE.AI", "AMAZON PRIME"], "Suscripciones"),
-        (["UBER", "CABIFY", "BOLT", "RENFE", "METRO", "EMT", "REPSOL", "CEPSA", "BP ", "SHELL"], "Transporte"),
         (["COMISION", "MANTENIMIENTO CUENTA", "CUOTA TARJETA", "COMISIÓN"], "Comisiones bancarias"),
         (["FARMACIA", "SEGURO SALUD", "CLINICA", "CLÍNICA", "MUTUA", "VETERINAR"], "Salud"),
         (["AMAZON", "EL CORTE INGLES", "EL CORTE INGLÉS", "ZARA", "IKEA"], "Compras"),
         (["ALQUILER", "COMUNIDAD PROPIETARIOS", "HIPOTECA"], "Vivienda/Hogar"),
-        (["IBERDROLA", "ENDESA", "NATURGY", "VODAFONE", "MOVISTAR", "ORANGE", "JAZZTEL"], "Suministros"),
+        (["IBERDROLA", "ENDESA", "NATURGY", "VODAFONE", "MOVISTAR", "ORANGE", "JAZZTEL", "DIGI"], "Suministros"),
         (["HOTEL", "TRAVELODGE", "AIRBNB", "BOOKING.COM"], "Ocio"),
         (["NOMINA", "NÓMINA", "PAYROLL", "SALARIO"], "Nómina/Ingresos")
     ]

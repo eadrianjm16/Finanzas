@@ -31,6 +31,7 @@ final class LinkedAccount {
     var linkedAt: Date
     var isVisible: Bool = true
     var isBalanceVisible: Bool = true
+    var lastSyncIssue: String?
 
     var connection: BankConnection?
 
@@ -66,6 +67,9 @@ final class Transaction {
 
     var account: LinkedAccount?
     var category: Category?
+
+    @Relationship(deleteRule: .nullify, inverse: \DebtEntry.transaction)
+    var debtEntries: [DebtEntry] = []
 
     init(
         entryReference: String,
@@ -116,5 +120,34 @@ final class Category {
         self.name = name
         self.systemIconName = systemIconName
         self.sortOrder = sortOrder
+    }
+}
+
+@Model
+final class Debtor {
+    @Attribute(.unique) var name: String
+    var createdAt: Date
+
+    @Relationship(deleteRule: .cascade, inverse: \DebtEntry.debtor)
+    var entries: [DebtEntry] = []
+
+    init(name: String, createdAt: Date = .now) {
+        self.name = name
+        self.createdAt = createdAt
+    }
+}
+
+@Model
+final class DebtEntry {
+    var amount: Decimal // positivo = te deben; negativo = pago recibido
+    var date: Date
+    var note: String?
+    var debtor: Debtor?
+    var transaction: Transaction?
+
+    init(amount: Decimal, date: Date = .now, note: String? = nil) {
+        self.amount = amount
+        self.date = date
+        self.note = note
     }
 }

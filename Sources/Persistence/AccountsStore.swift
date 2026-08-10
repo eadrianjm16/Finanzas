@@ -61,15 +61,29 @@ final class AccountsStore {
     }
 
     func refreshBalance(_ account: LinkedAccount) async throws {
-        let balances = try await client.fetchBalances(accountUID: account.accountUID)
-        guard let balance = balances.available else { return }
-        account.lastBalanceAmount = balance.balanceAmount.amount
-        account.lastBalanceCurrency = balance.balanceAmount.currency
-        account.lastBalanceRefreshedAt = .now
-        // lastSyncedAt es el checkpoint de TransactionsStore.sync (marca hasta
-        // dónde se trajeron movimientos) — no tocarlo aquí, o sync() cree que
-        // ya sincronizó "ahora mismo" y pida transacciones de una ventana vacía.
-        try modelContext.save()
+        do {
+            let balances = try await client.fetchBalances(accountUID: account.accountUID)
+            guard let balance = balances.available else { return }
+            account.lastBalanceAmount = balance.balanceAmount.amount
+            account.lastBalanceCurrency = balance.balanceAmount.currency
+            account.lastBalanceRefreshedAt = .now
+            // lastSyncedAt es el checkpoint de TransactionsStore.sync (marca hasta
+            // dónde se trajeron movimientos) — no tocarlo aquí, o sync() cree que
+            // ya sincronizó "ahora mismo" y pida transacciones de una ventana vacía.
+            account.lastSyncIssue = nil
+            try modelContext.save()
+        } catch {
+            account.lastSyncIssue = Self.userMessage(for: error)
+            try? modelContext.save()
+            throw error
+        }
+    }
+
+    private static func userMessage(for error: Error) -> String {
+        if case EnableBankingError.server(401, _) = error {
+            return "El banco pidió reautorizar el acceso — vuelve a conectarlo"
+        }
+        return "No se pudo actualizar el saldo"
     }
 
     func deleteConnection(_ connection: BankConnection) {

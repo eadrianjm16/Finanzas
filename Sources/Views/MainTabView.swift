@@ -11,6 +11,8 @@ struct MainTabView: View {
                 .tabItem { Label("Análisis", systemImage: "chart.bar") }
             BudgetsView()
                 .tabItem { Label("Presupuestos", systemImage: "chart.pie") }
+            DebtorsView()
+                .tabItem { Label("Cobros", systemImage: "person.2") }
             AlertsView()
                 .tabItem { Label("Alertas", systemImage: "bell") }
             SettingsView()

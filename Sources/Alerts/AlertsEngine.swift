@@ -36,6 +36,8 @@ enum AlertsEngine {
             spendByCategory[name, default: 0] += abs(tx.amount)
         }
 
+        let monthKey = Self.monthKeyFormatter.string(from: .now)
+
         return budgets.compactMap { budget in
             guard budget.monthlyLimit > 0,
                   let spent = spendByCategory[budget.categoryName] else { return nil }
@@ -46,13 +48,22 @@ enum AlertsEngine {
                 ? "Presupuesto de \(budget.categoryName) superado"
                 : "Vas al \(percent)% de tu presupuesto en \(budget.categoryName)"
             return Alert(
-                id: "budget-\(budget.categoryName)",
+                // Incluye el mes en el id: al descartar la alerta solo se oculta
+                // hasta que cambie de mes, no para siempre (el gasto real sigue).
+                id: "budget-\(budget.categoryName)-\(monthKey)",
                 icon: ratio >= 1 ? "exclamationmark.triangle.fill" : "chart.pie",
                 title: title,
                 subtitle: "\(spent) de \(budget.monthlyLimit) EUR este mes"
             )
         }
     }
+
+    private static let monthKeyFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "yyyy-MM"
+        return formatter
+    }()
 
     // MARK: - Posibles cargos duplicados
 
