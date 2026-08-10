@@ -1,0 +1,23 @@
+# XcodeGen generated project (regenerate with `xcodegen generate`)
+*.xcodeproj/
+Generated/
+
+# Xcode
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.build/
+*.swiftpm
+
+# Secrets - never commit real credentials
+Sources/Secrets/Secrets.plist
+*.pem
+
+# macOS
+.DS_Store
+
+# Local zip download, not part of the repo
+App_Adrian.zip
+
+# Local zip download, not part of the repo
+App_Adrian.zip

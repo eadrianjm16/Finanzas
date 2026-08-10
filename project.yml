@@ -1,0 +1,44 @@
+name: Finanzas
+options:
+  bundleIdPrefix: com.adrianjm.finanzas
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: es
+
+targets:
+  Finanzas:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: Finanzas
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false
+        CFBundleURLTypes:
+          - CFBundleURLName: com.adrianjm.finanzas.bank
+            CFBundleURLSchemes:
+              - finanzasapp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.adrianjm.finanzas
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        GENERATE_INFOPLIST_FILE: NO
+
+schemes:
+  Finanzas:
+    build:
+      targets:
+        Finanzas: all
+    run:
+      config: Debug
